@@ -27,6 +27,7 @@ using namespace std;
 #define OPT_USE_DEVICE_TIMING "use_device_timing"
 #define OPT_WINDOW "window"
 #define OPT_PRIORITY "priority"
+#define OPT_HWND "window_handle"
 
 static void GetWASAPIDefaults(obs_data_t *settings);
 
@@ -177,6 +178,7 @@ class WASAPISource {
 	string executable;
 	HWND hwnd = NULL;
 	DWORD process_id = 0;
+	HWND window_handle = NULL;
 	const SourceType sourceType;
 	std::atomic<bool> useDeviceTiming = false;
 	std::atomic<bool> isDefaultDevice = false;
@@ -285,6 +287,7 @@ class WASAPISource {
 		string window_class;
 		string title;
 		string executable;
+		HWND window_handle;
 	};
 
 	UpdateParams BuildUpdateParams(obs_data_t *settings);
@@ -574,7 +577,10 @@ WASAPISource::UpdateParams WASAPISource::BuildUpdateParams(obs_data_t *settings)
 	params.window_class.clear();
 	params.title.clear();
 	params.executable.clear();
+	params.window_handle = NULL;
 	if (sourceType != SourceType::Input) {
+		params.window_handle =
+			(HWND)obs_data_get_int(settings, OPT_HWND);
 		const char *const window =
 			obs_data_get_string(settings, OPT_WINDOW);
 		char *window_class = nullptr;
@@ -608,6 +614,7 @@ void WASAPISource::UpdateSettings(UpdateParams &&params)
 	window_class = std::move(params.window_class);
 	title = std::move(params.title);
 	executable = std::move(params.executable);
+	window_handle = params.window_handle;
 }
 
 void WASAPISource::LogSettings()
@@ -943,10 +950,14 @@ void WASAPISource::Initialize()
 	ComPtr<IMMDevice> device;
 	if (sourceType == SourceType::ProcessOutput) {
 		device_name = "[VIRTUAL_AUDIO_DEVICE_PROCESS_LOOPBACK]";
-
-		hwnd = ms_find_window(INCLUDE_MINIMIZED, priority,
-				      window_class.c_str(), title.c_str(),
-				      executable.c_str());
+		if (::IsWindow(window_handle)) {
+			hwnd = window_handle;
+		} else {
+			hwnd = ms_find_window(INCLUDE_MINIMIZED, priority,
+					      window_class.c_str(),
+					      title.c_str(),
+					      executable.c_str());
+		}
 		if (!hwnd)
 			throw "Failed to find window";
 
