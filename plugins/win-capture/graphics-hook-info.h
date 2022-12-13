@@ -8,21 +8,21 @@
 
 #include "hook-helpers.h"
 
-#define EVENT_CAPTURE_RESTART L"CaptureHook_Restart"
-#define EVENT_CAPTURE_STOP L"CaptureHook_Stop"
+#define EVENT_CAPTURE_RESTART L"CaptureHook_Restart_Cube"
+#define EVENT_CAPTURE_STOP L"CaptureHook_Stop_Cube"
 
-#define EVENT_HOOK_READY L"CaptureHook_HookReady"
-#define EVENT_HOOK_EXIT L"CaptureHook_Exit"
+#define EVENT_HOOK_READY L"CaptureHook_HookReady_Cube"
+#define EVENT_HOOK_EXIT L"CaptureHook_Exit_Cube"
 
-#define EVENT_HOOK_INIT L"CaptureHook_Initialize"
+#define EVENT_HOOK_INIT L"CaptureHook_Initialize_Cube"
 
-#define WINDOW_HOOK_KEEPALIVE L"CaptureHook_KeepAlive"
+#define WINDOW_HOOK_KEEPALIVE L"CaptureHook_KeepAlive_Cube"
 
-#define MUTEX_TEXTURE1 L"CaptureHook_TextureMutex1"
-#define MUTEX_TEXTURE2 L"CaptureHook_TextureMutex2"
+#define MUTEX_TEXTURE1 L"CaptureHook_TextureMutex1_Cube"
+#define MUTEX_TEXTURE2 L"CaptureHook_TextureMutex2_Cube"
 
-#define SHMEM_HOOK_INFO L"CaptureHook_HookInfo"
-#define SHMEM_TEXTURE L"CaptureHook_Texture"
+#define SHMEM_HOOK_INFO L"CaptureHook_HookInfo_Cube"
+#define SHMEM_TEXTURE L"CaptureHook_Texture_Cube"
 
 #define PIPE_NAME "CaptureHook_Pipe"
 

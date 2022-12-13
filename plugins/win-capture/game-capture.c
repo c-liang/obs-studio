@@ -47,6 +47,7 @@
 #define SETTING_MODE_ANY         "any_fullscreen"
 #define SETTING_MODE_WINDOW      "window"
 #define SETTING_MODE_HOTKEY      "hotkey"
+#define SETTING_MODE_HWND        "window_handle"
 
 #define HOTKEY_START             "hotkey_start"
 #define HOTKEY_STOP              "hotkey_stop"
@@ -89,7 +90,8 @@
 enum capture_mode {
 	CAPTURE_MODE_ANY,
 	CAPTURE_MODE_WINDOW,
-	CAPTURE_MODE_HOTKEY
+	CAPTURE_MODE_HOTKEY,
+	CAPTURE_MODE_HWND
 };
 
 enum hook_rate {
@@ -108,6 +110,7 @@ struct game_capture_config {
 	char *executable;
 	enum window_priority priority;
 	enum capture_mode mode;
+	volatile long long window_handle;
 	bool cursor;
 	bool force_shmem;
 	bool allow_transparency;
@@ -426,7 +429,11 @@ static inline void get_config(struct game_capture_config *cfg,
 		cfg->mode = CAPTURE_MODE_WINDOW;
 	else if (mode_str && strcmp(mode_str, SETTING_MODE_HOTKEY) == 0)
 		cfg->mode = CAPTURE_MODE_HOTKEY;
-	else
+	else if (mode_str && strcmp(mode_str, SETTING_MODE_HWND) == 0) {
+		cfg->mode = CAPTURE_MODE_HWND;
+		cfg->window_handle =
+			obs_data_get_int(settings, "window_handle");
+	} else
 		cfg->mode = CAPTURE_MODE_ANY;
 
 	cfg->priority = (enum window_priority)obs_data_get_int(
@@ -462,6 +469,9 @@ static inline bool capture_needs_reset(struct game_capture_config *cfg1,
 	if (cfg1->mode != cfg2->mode) {
 		return true;
 
+	} else if (cfg1->window_handle != cfg2->window_handle &&
+		   cfg1->mode == CAPTURE_MODE_HWND) {
+		return true;
 	} else if (cfg1->mode == CAPTURE_MODE_WINDOW &&
 		   (s_cmp(cfg1->class, cfg2->class) != 0 ||
 		    s_cmp(cfg1->title, cfg2->title) != 0 ||
@@ -1183,6 +1193,8 @@ static void try_hook(struct game_capture *gc)
 {
 	if (gc->config.mode == CAPTURE_MODE_ANY) {
 		get_fullscreen_window(gc);
+	} else if (gc->config.mode == CAPTURE_MODE_HWND) {
+		setup_window(gc, (HWND)gc->config.window_handle);
 	} else {
 		get_selected_window(gc);
 	}
@@ -1866,6 +1878,7 @@ static void game_capture_tick(void *data, float seconds)
 		if (!gc->error_acquiring &&
 		    gc->retry_time > gc->retry_interval) {
 			if (gc->config.mode == CAPTURE_MODE_ANY ||
+			    gc->config.mode == CAPTURE_MODE_HWND ||
 			    gc->activate_hook) {
 				try_hook(gc);
 				gc->retry_time = 0.0f;
